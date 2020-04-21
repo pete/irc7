@@ -531,7 +531,7 @@ int
 pmsg(int, char *time, char *pre, char *, char *par[])
 {
 	int n = 0;
-	char buf[8192];
+	char *buf;
 	char *c, *tc;
 
 /*
@@ -549,12 +549,15 @@ pmsg(int, char *time, char *pre, char *, char *par[])
 	}
 
 	if(!pre)
-		sprint(buf, "%s (%s) ⇐ %s\n", time, par[0], par[1]);
+		buf = smprint("%s (%s) ⇐ %s\n", time, par[0], par[1]);
 	else if(*par[0] != '#')
-		sprint(buf, "%s (%s) ⇒ %s\n", time, pre, par[1]);
+		buf = smprint("%s (%s) ⇒ %s\n", time, pre, par[1]);
 	else
-		sprint(buf, "%s %s → %s\n", time, pre, par[1]);
+		buf = smprint("%s %s → %s\n", time, pre, par[1]);
 	
+	if(!buf)
+		sysfatal("failed to allocate space for message: %r\n");
+
 	c = buf;
 again:
 	if(strlen(c) >= linewidth) {
@@ -572,6 +575,7 @@ again:
 		}
 	}
 	n += fprint(scr, "%s", c);
+	free(buf);
 	return n;
 }
 
