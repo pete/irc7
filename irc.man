@@ -4,18 +4,21 @@ ircsrv, irc \- internet relay chat client and ui
 .SH SYNOPSIS
 .B ircsrv
 [
-.I -s serv
+.I -e
+]
+[
+.I -s service
 ]
 [
 .I -f file
+]
+[
+.I -p pass
 ]
 .I nickname
 .I [tcp!]irc.server.org
 .br
 .B irc
-[
-.I -e
-]
 [
 .I -c charset
 ]
@@ -29,13 +32,11 @@ ircsrv, irc \- internet relay chat client and ui
 .I -r file
 ]
 [
-.I -p password
+.I /srv/irc
 ]
 [
-.I /srv/serv
-[
-.I /tmp/file
-]]
+.I /tmp/irc
+]
 .SH DESCRIPTION
 .I Ircsrv
 makes a connection to an irc server and reconnects if the connection
