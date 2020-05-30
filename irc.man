@@ -16,7 +16,7 @@ ircsrv, irc \- internet relay chat client and ui
 .I -p pass
 ]
 .I nickname
-.I [tcp!]irc.server.org
+.I [net!]irc.server.org[!port]
 .br
 .B irc
 [
