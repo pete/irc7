@@ -1,0 +1,7 @@
+Github (I should really ask for an account on only9fans or run a local version)
+complains unless there is a README.  I imported this from khm's Mercurial repo,
+and he didn't include a README.  Now it has a README.
+
+This is an IRC client in two parts:  a /srv interface and an interactive client
+that uses the /srv interface.  It runs on Plan 9.  It's a really comfortable
+client (though it has a couple of quirks).  khm wrote it, I added some bloat.
