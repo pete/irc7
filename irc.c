@@ -10,6 +10,7 @@ char help[] =
 "/M		mode #chan +nt\n"
 "/j		join #chan\n"
 "/p		part #chan\n"
+"/P		toggle showing PINGs.\n"
 "/q		send parameters raw to the server\n"
 "/l		list #chan\n"
 "/n		nick newnick\n"
@@ -38,6 +39,7 @@ char *victim;
 char *nick;
 int inacme;		/* running in acme? */
 int	linewidth; 	/* terminal width in # of characters */
+int showpings = 1;
 
 int replay;		/* just print the log ma'am */
 
@@ -51,12 +53,15 @@ void getwidth(void);	/* establish the width of the terminal, from mc.c */
 int pmsg(int fd, char *time, char *pre, char *cmd, char *par[]);
 int ntc(int fd, char *time, char *pre, char *cmd, char *par[]);
 int generic(int fd, char *time, char *pre, char *cmd, char *par[]);
+int ping(int fd, char *time, char *pre, char *cmd, char *par[]);
 int misc(int fd, char *time, char *pre, char *cmd, char *par[]);
 int numeric(int fd, char *time, char *pre, char *cmd, char *par[]);
 
 Handler handlers[] = {
 	{"PRIVMSG", pmsg},
 	{"NOTICE", ntc},
+	{"PING", ping},
+	{"PONG", ping},
 	{"JOIN", misc},
 	{"PART", misc},
 	{"MODE", misc},
@@ -81,7 +86,7 @@ int usrparse(char *ln, char *cmd, char *par[], int npar);
 void
 usage(void)
 {
-	char usage[] = "usage: irc [-c charset] [-t victim] [-b lines] [-r file] [/srv/irc [/tmp/irc]]\n";
+	char usage[] = "usage: irc [-c charset] [-t victim] [-b lines] [-r file] [-P] [/srv/irc [/tmp/irc]]\n";
 	write(1, usage, sizeof(usage)-1);
 	exits("usage");
 }
@@ -153,8 +158,11 @@ usrin(void)
 				}
 				break;
 			case 't':
-				if(par[0] != nil) {
+				if(victim) {
 					free(victim);
+					victim = nil;
+				}
+				if(par[0] != nil) {
 					victim = strdup(par[0]);
 					setwintitle(par[0]);
 				}
@@ -170,6 +178,10 @@ usrin(void)
 				break;
 			case 'j':
 				fprint(server_out, "JOIN %s\r\n", par[0] == nil ? victim : par[0]);
+				break;
+			case 'P':
+				showpings = !showpings;
+				fprint(scr, "PINGs are now %s.\n", showpings ? "visible" : "hidden");
 				break;
 			case 'p':
 				fprint(server_out, "PART %s\r\n", par[0] == nil ? victim : par[0]);
@@ -363,6 +375,9 @@ main(int argc, char *argv[])
 		replay = 1;
 		sb = 0;
 		break;
+	case 'P':
+		showpings = 0;
+		break;
 	default:
 		usage();
 	} ARGEND;
@@ -542,25 +557,26 @@ pmsg(int, char *time, char *pre, char *, char *par[])
 	if(victim) {
 		if((cistrncmp(victim, "MSGS", 4) == 0) && *par[0] != '#') {
 			/* catch-all for messages, fall through */
-		
 		} else if(cistrcmp(par[0], victim))
 			if(!pre || cistrcmp(pre, victim) || *par[0] == '#')
 				return 0;
 	}
 
 	if(!pre)
-		buf = smprint("%s (%s) ⇐ %s\n", time, par[0], par[1]);
+		buf = smprint("%s (%s) <⇐ %s\n", time, par[0], par[1]);
 	else if(*par[0] != '#')
-		buf = smprint("%s (%s) ⇒ %s\n", time, pre, par[1]);
+		buf = smprint("%s (%s)  ⇒> %s\n", time, pre, par[1]);
 	else
-		buf = smprint("%s %s → %s\n", time, pre, par[1]);
+		buf = smprint("%s (%s) %s → %s\n", time, par[0], pre, par[1]);
 	
 	if(!buf)
 		sysfatal("failed to allocate space for message: %r\n");
 
 	c = buf;
 again:
-	if(strlen(c) >= linewidth) {
+	if(0 && strlen(c) >= linewidth) {
+		/* Line-wrapping is more trouble than it's worth.  Maybe make
+		   this a setting. */
 		for(tc = c + linewidth; tc > c; tc--) {
 			switch(*tc) {
 			case ' ':
@@ -594,9 +610,9 @@ ntc(int, char *time, char *pre, char *, char *par[])
 			return 0;
 
 	if(!pre)
-		n = fprint(scr, "%s [%s] ⇐\t%s\n", time, par[0], par[1]);
+		n = fprint(scr, "%s [%s] «⇐ \t%s\n", time, par[0], par[1]);
 	else if(*par[0] != '#')
-		n = fprint(scr, "%s [%s] ⇒\t%s\n", time, pre, par[1]);
+		n = fprint(scr, "%s [%s]  ⇒»\t%s\n", time, pre, par[1]);
 	else
 		n = fprint(scr, "%s [%s] %s →\t%s\n", time, par[0], pre, par[1]);
 	return n;
@@ -625,6 +641,14 @@ generic(int, char *time, char *pre, char *cmd, char *par[])
 	r += fprint(scr, "\n");
 
 	return r;
+}
+
+int
+ping(int i, char *time, char *pre, char *cmd, char *par[])
+{
+	if(!showpings)
+		return 0;
+	return generic(i, time, pre, cmd, par);
 }
 
 int
