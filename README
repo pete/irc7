@@ -4,4 +4,5 @@ and he didn't include a README.  Now it has a README.
 
 This is an IRC client in two parts:  a /srv interface and an interactive client
 that uses the /srv interface.  It runs on Plan 9.  It's a really comfortable
-client (though it has a couple of quirks).  khm wrote it, I added some bloat.
+client (though it has a couple of quirks).  The late Andrey Mirtchovski wrote it,
+khm maintained it for a while, I added some bloat.
